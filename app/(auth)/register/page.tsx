@@ -1,150 +1,191 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { KairosLogo } from "@/components/kairos-logo"
-import { Github, Loader2, Mail } from "lucide-react"
-import Link from "next/link"
-import { useAuth } from "@/components/auth/auth-provider"
-import { useRouter } from "next/navigation"
-import { GeometricBackground, FadeUpAnimation } from "@/components/geometric-animations"
-import { toast } from "@/components/ui/use-toast"
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { Github, Mail } from "lucide-react";
 
 export default function RegisterPage() {
-  const [isLoading, setIsLoading] = useState(false)
-  const { signIn, user } = useAuth()
-  const router = useRouter()
+  const router = useRouter();
+  const [formData, setFormData] = useState({
+    username: '',
+    email: '',
+    password: '',
+    password2: '',
+    first_name: '',
+    last_name: '',
+  });
+  const [error, setError] = useState('');
 
-  // If user is already logged in, redirect to dashboard
-  useEffect(() => {
-    if (user) {
-      router.push("/dashboard")
-    }
-  }, [user, router])
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
+  };
 
-  const handleOAuthSignIn = async (provider: "google" | "github") => {
-    setIsLoading(true)
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+
     try {
-      await signIn(provider)
-      router.push("/dashboard")
-    } catch (error) {
-      console.error("Authentication error:", error)
-      toast({
-        title: "Authentication failed",
-        description: "There was a problem signing you up. Please try again.",
-        variant: "destructive",
-      })
-    } finally {
-      setIsLoading(false)
-    }
-  }
+      const response = await fetch('http://localhost:8000/api/auth/register/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
 
-  if (user) {
-    return null // Don't render anything while redirecting
-  }
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Registration failed');
+      }
+
+      router.push('/login');
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
+
+  const handleGoogleLogin = () => {
+    window.location.href = 'http://localhost:8000/api/auth/google/login/';
+  };
+
+  const handleGithubLogin = () => {
+    window.location.href = 'http://localhost:8000/api/auth/github/login/';
+  };
 
   return (
-    <GeometricBackground className="flex min-h-screen flex-col items-center justify-center">
-      <div className="w-full max-w-md px-4">
-        <FadeUpAnimation delay={0} className="flex flex-col items-center mb-6">
-          <Link href="/" className="flex items-center gap-2 mb-2">
-            <KairosLogo size="md" />
-            <span className="font-bold text-xl">Kairos</span>
-          </Link>
-          <h1 className="text-2xl font-semibold tracking-tight text-center">Create an account</h1>
-          <p className="text-sm text-muted-foreground text-center">Join the 30 Days of Code challenge with VickyJay</p>
-        </FadeUpAnimation>
-
-        <FadeUpAnimation delay={1}>
-          <Card className="glass-card border-border/30">
-            <CardHeader className="space-y-1 pb-2">
-              <CardTitle className="text-xl">Sign Up</CardTitle>
-              <CardDescription>Choose your preferred sign up method</CardDescription>
+    <div className="flex min-h-screen items-center justify-center bg-gray-100">
+      <Card className="w-[400px]">
+        <CardHeader>
+          <CardTitle>Create an account</CardTitle>
+          <CardDescription>
+            Enter your details below to create your account
+          </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4 pt-0">
+        <form onSubmit={handleSubmit}>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="username">Username</Label>
+              <Input
+                id="username"
+                name="username"
+                type="text"
+                required
+                value={formData.username}
+                onChange={handleChange}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                required
+                value={formData.email}
+                onChange={handleChange}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                name="password"
+                type="password"
+                required
+                value={formData.password}
+                onChange={handleChange}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password2">Confirm Password</Label>
+              <Input
+                id="password2"
+                name="password2"
+                type="password"
+                required
+                value={formData.password2}
+                onChange={handleChange}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Button
-                  className="w-full gap-2"
-                  variant="outline"
-                  onClick={() => handleOAuthSignIn("google")}
-                  disabled={isLoading}
-                >
-                  {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
-                  Sign up with Google
-                </Button>
-
-                <Button
-                  className="w-full gap-2"
-                  variant="outline"
-                  onClick={() => handleOAuthSignIn("github")}
-                  disabled={isLoading}
-                >
-                  {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Github className="h-4 w-4" />}
-                  Sign up with GitHub
-                </Button>
+                <Label htmlFor="first_name">First Name</Label>
+                <Input
+                  id="first_name"
+                  name="first_name"
+                  type="text"
+                  value={formData.first_name}
+                  onChange={handleChange}
+                />
               </div>
-
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t" />
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-card px-2 text-muted-foreground">Or continue with</span>
-                </div>
-              </div>
-
               <div className="space-y-2">
-                <div className="space-y-1">
-                  <Label htmlFor="name">Name</Label>
-                  <Input id="name" placeholder="John Doe" className="input-futuristic" />
+                <Label htmlFor="last_name">Last Name</Label>
+                <Input
+                  id="last_name"
+                  name="last_name"
+                  type="text"
+                  value={formData.last_name}
+                  onChange={handleChange}
+                />
                 </div>
-                <div className="space-y-1">
-                  <Label htmlFor="email">Email</Label>
-                  <Input id="email" placeholder="name@example.com" className="input-futuristic" />
                 </div>
-                <div className="space-y-1">
-                  <Label htmlFor="password">Password</Label>
-                  <Input id="password" type="password" className="input-futuristic" />
+            {error && (
+              <div className="text-red-500 text-sm">{error}</div>
+            )}
+          </CardContent>
+          <CardFooter className="flex flex-col space-y-4">
+            <Button type="submit" className="w-full">
+              Create Account
+            </Button>
+            <div className="relative w-full">
+              <div className="absolute inset-0 flex items-center">
+                <Separator className="w-full" />
                 </div>
-                <div className="space-y-1">
-                  <Label htmlFor="confirm-password">Confirm Password</Label>
-                  <Input id="confirm-password" type="password" className="input-futuristic" />
-                </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background px-2 text-muted-foreground">
+                  Or continue with
+                </span>
               </div>
-            </CardContent>
-            <CardFooter>
-              <Button className="w-full btn-futuristic" onClick={() => handleOAuthSignIn("google")}>
-                Create Account
+            </div>
+            <div className="grid grid-cols-2 gap-4 w-full">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleGoogleLogin}
+                className="w-full"
+              >
+                <Mail className="mr-2 h-4 w-4" />
+                Google
               </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleGithubLogin}
+                className="w-full"
+              >
+                <Github className="mr-2 h-4 w-4" />
+                GitHub
+              </Button>
+            </div>
+            <div className="text-center text-sm">
+              Already have an account?{' '}
+              <a href="/login" className="text-blue-500 hover:underline">
+                Login
+              </a>
+            </div>
             </CardFooter>
+        </form>
           </Card>
-        </FadeUpAnimation>
-
-        <FadeUpAnimation delay={2} className="mt-4">
-          <p className="text-center text-sm text-muted-foreground">
-            Already have an account?{" "}
-            <Link href="/login" className="underline underline-offset-4 hover:text-primary">
-              Sign in
-            </Link>
-          </p>
-
-          <p className="mt-2 text-center text-sm text-muted-foreground">
-            By clicking continue, you agree to our{" "}
-            <Link href="#" className="underline underline-offset-4 hover:text-primary">
-              Terms of Service
-            </Link>{" "}
-            and{" "}
-            <Link href="#" className="underline underline-offset-4 hover:text-primary">
-              Privacy Policy
-            </Link>
-            .
-          </p>
-        </FadeUpAnimation>
       </div>
-    </GeometricBackground>
-  )
+  );
 }
 
