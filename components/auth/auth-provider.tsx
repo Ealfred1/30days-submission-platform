@@ -1,7 +1,6 @@
 "use client"
 
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
-import { useToast } from "@/components/ui/use-toast"
 import { useRouter } from "next/navigation"
 
 type User = {
@@ -24,7 +23,6 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
-  const { toast } = useToast()
   const router = useRouter()
 
   // Simulate loading user data
@@ -75,19 +73,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(newUser)
       localStorage.setItem("kairos-user", JSON.stringify(newUser))
 
-      toast({
-        title: "Signed in successfully",
-        description: `Welcome, ${newUser.name}!`,
-      })
-
       // Redirect to dashboard after successful login
       router.push("/dashboard")
     } catch (error) {
-      toast({
-        title: "Authentication failed",
-        description: "There was a problem signing you in.",
-        variant: "destructive",
-      })
+      console.error("Authentication error:", error)
     } finally {
       setLoading(false)
     }
@@ -100,19 +89,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(null)
       localStorage.removeItem("kairos-user")
 
-      toast({
-        title: "Signed out successfully",
-        description: "You have been signed out of your account.",
-      })
-
       // Redirect to home page after logout
       router.push("/")
     } catch (error) {
-      toast({
-        title: "Sign out failed",
-        description: "There was a problem signing you out.",
-        variant: "destructive",
-      })
+      console.error("Sign out error:", error)
     } finally {
       setLoading(false)
     }
