@@ -8,6 +8,7 @@ declare module 'lucide-react' {
   }
 
   type Icon = ComponentType<IconProps>;
+  export type LucideIcon = ComponentType<IconProps>;
 
   // Navigation icons
   export const Home: Icon;
@@ -34,6 +35,14 @@ declare module 'lucide-react' {
   // Theme icons
   export const Moon: Icon;
   export const Sun: Icon;
+
+  // Feature icons
+  export const ArrowRight: Icon;
+  export const Calendar: Icon;
+  export const Code: Icon;
+  export const Globe: Icon;
+  export const Star: Icon;
+  export const Brain: Icon;
 
   // Add more icons as needed
 }
