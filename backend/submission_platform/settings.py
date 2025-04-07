@@ -146,7 +146,7 @@ AUTHENTICATION_BACKENDS = [
     'allauth.account.auth_backends.AuthenticationBackend',
 ]
 
-SITE_ID = 1
+SITE_ID = 2 # We'll set this to 1 and recreate the site
 
 # Social Auth settings
 SOCIALACCOUNT_PROVIDERS = {
@@ -156,7 +156,14 @@ SOCIALACCOUNT_PROVIDERS = {
             'secret': os.getenv('GOOGLE_CLIENT_SECRET', ''),
             'key': ''
         },
-        'SCOPE': ['profile', 'email'],
+        'SCOPE': [
+            'profile',
+            'email',
+        ],
+        'AUTH_PARAMS': {
+            'access_type': 'online',
+        },
+        'OAUTH_PKCE_ENABLED': True,
     },
     'github': {
         'APP': {
@@ -172,7 +179,24 @@ SOCIALACCOUNT_PROVIDERS = {
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_USERNAME_REQUIRED = True
 ACCOUNT_AUTHENTICATION_METHOD = 'email'
-ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
+ACCOUNT_EMAIL_VERIFICATION = 'optional'
+ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'http'
+LOGIN_REDIRECT_URL = '/'
+ACCOUNT_LOGOUT_REDIRECT_URL = '/'
+SOCIALACCOUNT_LOGIN_ON_GET = True
+SOCIALACCOUNT_AUTO_SIGNUP = True
+
+# OAuth specific settings
+SOCIALACCOUNT_STORE_TOKENS = True
+SOCIALACCOUNT_EMAIL_VERIFICATION = 'none'
+SOCIALACCOUNT_EMAIL_REQUIRED = False
+SOCIALACCOUNT_QUERY_EMAIL = True
+
+# Google OAuth specific settings
+SOCIALACCOUNT_PROVIDERS['google']['AUTH_PARAMS'] = {
+    'access_type': 'online',
+    'prompt': 'select_account',
+}
 
 # REST Framework settings
 REST_FRAMEWORK = {
@@ -194,7 +218,3 @@ CORS_ALLOW_CREDENTIALS = True
 
 # Email settings (for development)
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-
-# Add this to your settings.py
-LOGIN_REDIRECT_URL = 'dashboard'
-ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'http'  # For local development
