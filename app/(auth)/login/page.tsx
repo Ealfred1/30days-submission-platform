@@ -52,7 +52,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md px-4">
         <FadeUpAnimation delay={0} className="flex flex-col items-center mb-6">
           <Link href="/" className="flex items-center gap-2 mb-2">
-            <KairosLogo size="md" />
+            <KairosLogo size="md" /> 
             <span className="font-bold text-xl">Kairos</span>
           </Link>
           <h1 className="text-2xl font-semibold tracking-tight text-center">Welcome back</h1>

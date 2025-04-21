@@ -1,111 +1,76 @@
 "use client"
 
-import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
-import { useRouter } from "next/navigation"
+import { createContext, useContext, useEffect, useState } from 'react'
+import { User } from 'firebase/auth'
+import { signInWithProvider, signOut, getCurrentUser } from '@/services/auth'
 
-type User = {
-  id: string
-  name: string | null
-  email: string | null
-  image: string | null
-  role: "user" | "admin"
-}
-
-type AuthContextType = {
+interface AuthContextType {
   user: User | null
   loading: boolean
-  signIn: (provider: "google" | "github") => Promise<void>
+  signIn: (provider: 'google' | 'github') => Promise<void>
   signOut: () => Promise<void>
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined)
+const AuthContext = createContext<AuthContextType>({
+  user: null,
+  loading: true,
+  signIn: async () => {},
+  signOut: async () => {},
+})
 
-export function AuthProvider({ children }: { children: ReactNode }) {
+export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
-  const router = useRouter()
 
-  // Simulate loading user data
   useEffect(() => {
-    const loadUser = () => {
+    const initAuth = async () => {
       try {
-        // Check if user data exists in localStorage
-        const storedUser = localStorage.getItem("kairos-user")
-        if (storedUser) {
-          setUser(JSON.parse(storedUser))
-        }
+        const user = await getCurrentUser()
+        setUser(user)
       } catch (error) {
-        console.error("Error loading user from localStorage:", error)
+        console.error('Auth initialization error:', error)
       } finally {
         setLoading(false)
       }
     }
 
-    // Add a small delay to simulate loading
-    setTimeout(loadUser, 500)
+    initAuth()
   }, [])
 
-  const signIn = async (provider: "google" | "github") => {
-    setLoading(true)
+  const handleSignIn = async (provider: 'google' | 'github') => {
     try {
-      // Simulate OAuth authentication
-      // In a real app, this would redirect to the OAuth provider
-
-      // For demo purposes, create a mock user
-      const mockUsers = {
-        google: {
-          id: "google-123",
-          name: "Alex Johnson",
-          email: "alex@example.com",
-          image: "/placeholder.svg?height=40&width=40",
-          role: "user" as const,
-        },
-        github: {
-          id: "github-456",
-          name: "Sam Developer",
-          email: "sam@example.com",
-          image: "/placeholder.svg?height=40&width=40",
-          role: "admin" as const,
-        },
-      }
-
-      const newUser = mockUsers[provider]
-      setUser(newUser)
-      localStorage.setItem("kairos-user", JSON.stringify(newUser))
-
-      // Redirect to dashboard after successful login
-      router.push("/dashboard")
+      const { user, token } = await signInWithProvider(provider)
+      setUser(user)
+      localStorage.setItem('token', token)
     } catch (error) {
-      console.error("Authentication error:", error)
-    } finally {
-      setLoading(false)
+      console.error('Sign in error:', error)
+      throw error
     }
   }
 
-  const signOut = async () => {
-    setLoading(true)
+  const handleSignOut = async () => {
     try {
-      // Clear user data
+      await signOut()
       setUser(null)
-      localStorage.removeItem("kairos-user")
-
-      // Redirect to home page after logout
-      router.push("/")
     } catch (error) {
-      console.error("Sign out error:", error)
-    } finally {
-      setLoading(false)
+      console.error('Sign out error:', error)
+      throw error
     }
   }
 
-  return <AuthContext.Provider value={{ user, loading, signIn, signOut }}>{children}</AuthContext.Provider>
+  return (
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        signIn: handleSignIn,
+        signOut: handleSignOut,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  )
 }
 
-export function useAuth() {
-  const context = useContext(AuthContext)
-  if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider")
-  }
-  return context
-}
+export const useAuth = () => useContext(AuthContext)
 
