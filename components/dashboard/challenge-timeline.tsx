@@ -12,11 +12,10 @@ export function ChallengeTimeline() {
     return <div>Loading...</div>
   }
 
-  // Mock data for the timeline
-  const days = Array.from({ length: 30 }, (_, i) => ({
+  const timeline = stats?.timeline || Array.from({ length: 30 }, (_, i) => ({
     day: i + 1,
-    completed: i < 12,
-    current: i === 12,
+    completed: false,
+    current: false
   }))
 
   return (
@@ -38,7 +37,7 @@ export function ChallengeTimeline() {
           </div>
 
           <div className="grid grid-cols-6 gap-2">
-            {days.map((day, index) => (
+            {timeline.map((day, index) => (
               <motion.div
                 key={day.day}
                 initial={{ opacity: 0, scale: 0.8 }}
@@ -60,7 +59,9 @@ export function ChallengeTimeline() {
           <div className="pt-4">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-medium">Progress</span>
-              <span className="text-sm font-medium">{stats?.progress_percentage.toFixed(1)}%</span>
+              <span className="text-sm font-medium">
+                {stats?.progress_percentage?.toFixed(1) || 0}%
+              </span>
             </div>
             <div className="h-2 w-full rounded-full bg-muted">
               <motion.div
