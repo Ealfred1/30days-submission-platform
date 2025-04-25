@@ -7,12 +7,14 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Code2, ExternalLink, Sparkles } from "lucide-react"
 import { useAuth } from "@/components/auth/auth-provider"
 import Link from "next/link"
+import { useDashboard } from "@/providers/dashboard-provider"
 
 export function DashboardHero() {
   const [particles, setParticles] = useState<Array<{ id: number; x: number; y: number; size: number; color: string }>>(
     [],
   )
-  const { user } = useAuth()
+  const { userInfo } = useAuth()
+  const { stats } = useDashboard()
 
   useEffect(() => {
     // Generate random particles
@@ -59,7 +61,7 @@ export function DashboardHero() {
       <div className="relative z-10">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
           <h1 className="text-4xl font-bold mb-2 flex items-center gap-2">
-            {user ? `Welcome back, ${user.name?.split(" ")[0] || "Coder"}` : "Welcome to Kairos"}
+            Welcome back, {userInfo?.name || "Coder"}
             <Sparkles className="h-6 w-6 text-primary animate-pulse" />
           </h1>
           <p className="text-xl text-muted-foreground mb-6">30 Days of Code with VickyJay - Challenge Edition 7</p>

@@ -4,59 +4,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { motion } from "framer-motion"
 import { Code, MessageSquare, Star } from "lucide-react"
+import { useDashboard } from "@/providers/dashboard-provider"
 
 export function ActivityFeed() {
-  const activities = [
-    {
-      id: 1,
-      type: "submission",
-      user: {
-        name: "Sarah Johnson",
-        avatar: "/placeholder.svg?height=40&width=40",
-      },
-      project: "Task Manager App",
-      time: "2 hours ago",
-      icon: Code,
-      iconColor: "text-primary",
-    },
-    {
-      id: 2,
-      type: "review",
-      user: {
-        name: "Michael Chen",
-        avatar: "/placeholder.svg?height=40&width=40",
-      },
-      project: "Weather Dashboard",
-      time: "4 hours ago",
-      icon: MessageSquare,
-      iconColor: "text-secondary",
-    },
-    {
-      id: 3,
-      type: "rating",
-      user: {
-        name: "Olivia Rodriguez",
-        avatar: "/placeholder.svg?height=40&width=40",
-      },
-      project: "E-commerce UI",
-      rating: 5,
-      time: "6 hours ago",
-      icon: Star,
-      iconColor: "text-yellow-500",
-    },
-    {
-      id: 4,
-      type: "submission",
-      user: {
-        name: "David Kim",
-        avatar: "/placeholder.svg?height=40&width=40",
-      },
-      project: "Portfolio Website",
-      time: "8 hours ago",
-      icon: Code,
-      iconColor: "text-primary",
-    },
-  ]
+  const { stats, loading } = useDashboard()
+
+  if (loading) {
+    return <div>Loading...</div>
+  }
 
   return (
     <Card className="glass-card h-full border-border/30">
@@ -64,7 +19,7 @@ export function ActivityFeed() {
         <CardTitle>Recent Activity</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {activities.map((activity, index) => (
+        {stats?.recent_activities.map((activity, index) => (
           <motion.div
             key={activity.id}
             initial={{ opacity: 0, x: -20 }}

@@ -3,8 +3,15 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { motion } from "framer-motion"
 import { CheckCircle2, Circle } from "lucide-react"
+import { useDashboard } from "@/providers/dashboard-provider"
 
 export function ChallengeTimeline() {
+  const { stats, loading } = useDashboard()
+
+  if (loading) {
+    return <div>Loading...</div>
+  }
+
   // Mock data for the timeline
   const days = Array.from({ length: 30 }, (_, i) => ({
     day: i + 1,
@@ -53,13 +60,13 @@ export function ChallengeTimeline() {
           <div className="pt-4">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-medium">Progress</span>
-              <span className="text-sm font-medium">40%</span>
+              <span className="text-sm font-medium">{stats?.progress_percentage.toFixed(1)}%</span>
             </div>
             <div className="h-2 w-full rounded-full bg-muted">
               <motion.div
                 className="h-2 rounded-full bg-gradient-to-r from-primary via-secondary to-primary"
                 initial={{ width: 0 }}
-                animate={{ width: "40%" }}
+                animate={{ width: `${stats?.progress_percentage || 0}%` }}
                 transition={{ duration: 1, ease: "easeOut" }}
               />
             </div>

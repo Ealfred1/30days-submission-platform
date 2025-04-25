@@ -3,42 +3,50 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { motion } from "framer-motion"
 import { Award, Clock, Code, Users } from "lucide-react"
+import { useDashboard } from "@/providers/dashboard-provider"
+import { formatDistanceToNow } from "date-fns"
 
 export function DashboardStats() {
-  const stats = [
+  const { stats, loading } = useDashboard()
+
+  const statsData = [
     {
       title: "Days Remaining",
-      value: "18",
+      value: stats?.days_remaining.toString() || "-",
       icon: Clock,
-      description: "12 days completed",
+      description: `${stats?.days_completed || 0} days completed`,
       color: "text-primary",
     },
     {
       title: "Your Submissions",
-      value: "8",
+      value: stats?.submission_count.toString() || "-",
       icon: Code,
-      description: "Last submitted 2 days ago",
+      description: stats?.last_submission_date ? `Last submitted ${formatDistanceToNow(new Date(stats.last_submission_date))} ago` : "No submissions yet",
       color: "text-secondary",
     },
     {
       title: "Your Rank",
-      value: "#12",
+      value: stats ? `#${stats.rank}` : "-",
       icon: Award,
-      description: "Top 15%",
+      description: `Top ${stats?.rank_percentile.toFixed(1)}%`,
       color: "text-accent",
     },
     {
       title: "Total Participants",
-      value: "248",
+      value: stats?.total_participants.toString() || "-",
       icon: Users,
-      description: "From 32 countries",
+      description: "From multiple countries",
       color: "text-orange-500",
     },
   ]
 
+  if (loading) {
+    return <div>Loading...</div>
+  }
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      {stats.map((stat, index) => (
+      {statsData.map((stat, index) => (
         <motion.div
           key={stat.title}
           initial={{ opacity: 0, y: 20 }}
