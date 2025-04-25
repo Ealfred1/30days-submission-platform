@@ -1,74 +1,94 @@
-import { auth, googleProvider, githubProvider } from '@/lib/firebase';
-import { signInWithPopup, signOut as firebaseSignOut, User } from 'firebase/auth';
+import api from './api';
+import { auth } from '@/lib/firebase';
+import { 
+  signInWithPopup, 
+  GoogleAuthProvider, 
+  GithubAuthProvider,
+  User
+} from 'firebase/auth';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+export interface UserInfo {
+  id: number;
+  email: string;
+  name: string;
+  avatar: string;
+  provider: string;
+  date_joined: string;
+  last_login: string;
+}
 
-export const signInWithProvider = async (provider: 'google' | 'github') => {
+export const signInWithProvider = async (providerName: 'google' | 'github') => {
   try {
-    const authProvider = provider === 'google' ? googleProvider : githubProvider;
-    const result = await signInWithPopup(auth, authProvider);
-    const idToken = await result.user.getIdToken();
-    
-    // Verify token with backend - Updated endpoint
-    const response = await fetch(`${API_URL}/api/auth/verify-token/`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include',
-      body: JSON.stringify({
-        idToken: idToken
-      }),
-    });
+    let user: User;
+    let idToken: string;
 
-    if (!response.ok) {
-      throw new Error('Failed to verify with backend');
+    if (auth.currentUser) {
+      user = auth.currentUser;
+      idToken = await user.getIdToken(true); // Force refresh the token
+    } else {
+      const provider = providerName === 'google' 
+        ? new GoogleAuthProvider() 
+        : new GithubAuthProvider();
+        
+      const result = await signInWithPopup(auth, provider);
+      user = result.user;
+      idToken = await user.getIdToken();
     }
 
-    const userData = await response.json();
-    console.log('Backend verification successful:', userData);
-    
-    // Store the JWT tokens
-    localStorage.setItem('token', userData.token);
-    localStorage.setItem('refresh', userData.refresh);
-    
-    return { user: result.user, token: userData.token };
+    // Verify token with backend
+    const response = await api.post('/api/auth/verify-token/', { idToken });
+    const { token, refresh } = response.data;
+
+    // Store both tokens
+    localStorage.setItem('token', token);
+    localStorage.setItem('refresh_token', refresh);
+
+    // Update axios default headers
+    api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
+    return { user, token };
   } catch (error) {
     console.error('Authentication error:', error);
     throw error;
   }
 };
 
+export const getCurrentUserInfo = async (): Promise<UserInfo> => {
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('No token found');
+    }
+
+    const response = await api.get('/api/me/');
+    return response.data;
+  } catch (error) {
+    console.error('Failed to fetch user info:', error);
+    throw error;
+  }
+};
+
 export const signOut = async () => {
   try {
-    await firebaseSignOut(auth);
-    // Clear JWT tokens from backend - Updated endpoint
-    const refresh = localStorage.getItem('refresh');
-    if (refresh) {
-      await fetch(`${API_URL}/api/auth/logout/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          refresh_token: refresh
-        }),
-      });
+    const refreshToken = localStorage.getItem('refresh_token');
+    if (refreshToken) {
+      await api.post('/api/auth/logout/', { refresh_token: refreshToken });
     }
+    await auth.signOut();
     localStorage.removeItem('token');
-    localStorage.removeItem('refresh');
+    localStorage.removeItem('refresh_token');
+    delete api.defaults.headers.common['Authorization'];
   } catch (error) {
     console.error('Sign out error:', error);
     throw error;
   }
 };
 
-export async function getCurrentUser(): Promise<User | null> {
-  return new Promise((resolve) => {
+export const getCurrentUser = async () => {
+  return new Promise((resolve, reject) => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
       unsubscribe();
       resolve(user);
-    });
+    }, reject);
   });
-}
+};

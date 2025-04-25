@@ -18,7 +18,7 @@ export function Navbar({
   sidebarOpen: boolean
   setSidebarOpen: (open: boolean) => void
 }) {
-  const { user, signOut } = useAuth()
+  const { user, userInfo, signOut } = useAuth()
   const [searchQuery, setSearchQuery] = useState("")
 
   return (
@@ -68,20 +68,29 @@ export function Navbar({
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="rounded-full h-9 w-9">
               <Avatar className="h-8 w-8 border border-primary/20">
-                <AvatarImage src={user?.image || "/placeholder.svg?height=40&width=40"} alt={user?.name || "User"} />
-                <AvatarFallback>{user?.name?.charAt(0) || "U"}</AvatarFallback>
+                <AvatarImage src={userInfo?.avatar || "/placeholder.svg"} alt={userInfo?.name || "User"} />
+                <AvatarFallback>{userInfo?.name?.charAt(0) || "U"}</AvatarFallback>
               </Avatar>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
             <div className="flex items-center gap-2 p-2">
               <Avatar className="h-8 w-8">
-                <AvatarImage src={user?.image || "/placeholder.svg?height=40&width=40"} alt={user?.name || "User"} />
-                <AvatarFallback>{user?.name?.charAt(0) || "U"}</AvatarFallback>
+                <AvatarImage 
+                  src={userInfo?.avatar || "/placeholder.svg"} 
+                  alt={userInfo?.name || "User"} 
+                />
+                <AvatarFallback>
+                  {userInfo?.name?.charAt(0) || "U"}
+                </AvatarFallback>
               </Avatar>
               <div className="flex flex-col">
-                <span className="text-sm font-medium">{user?.name || "User"}</span>
-                <span className="text-xs text-muted-foreground">{user?.email || "user@example.com"}</span>
+                <span className="text-sm font-medium">
+                  {userInfo?.name || "User"}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {userInfo?.email || "Loading..."}
+                </span>
               </div>
             </div>
             <DropdownMenuItem asChild>

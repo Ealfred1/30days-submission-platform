@@ -54,7 +54,7 @@ export function Sidebar({
   isMobile: boolean
   pathname: string
 }) {
-  const { user, signOut } = useAuth()
+  const { userInfo, signOut } = useAuth()
 
   return (
     <AnimatePresence mode="wait">
@@ -120,14 +120,16 @@ export function Sidebar({
                     <Button variant="ghost" className="flex items-center gap-2 h-auto p-2 w-full justify-start">
                       <Avatar className="h-8 w-8 border border-primary/20">
                         <AvatarImage
-                          src={user?.image || "/placeholder.svg?height=40&width=40"}
-                          alt={user?.name || "User"}
+                          src={userInfo?.avatar || "/placeholder.svg"}
+                          alt={userInfo?.name || "User"}
                         />
-                        <AvatarFallback>{user?.name?.charAt(0) || "U"}</AvatarFallback>
+                        <AvatarFallback>{userInfo?.name?.charAt(0) || "U"}</AvatarFallback>
                       </Avatar>
                       <div className="flex flex-col items-start text-sm">
-                        <span className="font-medium">{user?.name || "User"}</span>
-                        <span className="text-xs text-muted-foreground capitalize">{user?.role || "Participant"}</span>
+                        <span className="font-medium">{userInfo?.name || "User"}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {userInfo?.provider ? userInfo.provider.charAt(0).toUpperCase() + userInfo.provider.slice(1) : "User"}
+                        </span>
                       </div>
                       <ChevronDown className="h-4 w-4 ml-2" />
                     </Button>
