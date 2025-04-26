@@ -1,13 +1,26 @@
 "use client";
 
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useState, useEffect } from "react";
 import api from "@/services/api";
 
 type Submission = {
   id: number;
   title: string;
   description: string;
-  // ... other fields
+  repository_url: string;
+  live_demo_url?: string;
+  preview_image: string;
+  day_number: number;
+  technologies: string[];
+  additional_images: string[];
+  created_at: string;
+  updated_at: string;
+  user: {
+    id: number;
+    name: string;
+    avatar: string;
+  };
+  branch: string;
 };
 
 type SubmissionContextType = {
@@ -16,6 +29,7 @@ type SubmissionContextType = {
   error: string | null;
   fetchSubmissions: () => Promise<void>;
   createSubmission: (data: FormData) => Promise<void>;
+  getSubmission: (id: number) => Promise<Submission | undefined>;
 };
 
 const SubmissionContext = createContext<SubmissionContextType | undefined>(undefined);
@@ -28,14 +42,30 @@ export function SubmissionProvider({ children }: { children: React.ReactNode }) 
   const fetchSubmissions = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/api/submissions/submissions/');
+      const response = await api.get('/api/submissions/submissions/my_submissions/');
       setSubmissions(response.data);
     } catch (error) {
       setError('Failed to fetch submissions');
+      console.error('Error fetching submissions:', error);
     } finally {
       setLoading(false);
     }
   };
+
+  const getSubmission = async (id: number) => {
+    try {
+      const response = await api.get(`/api/submissions/submissions/${id}/`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching submission:', error);
+      return undefined;
+    }
+  };
+
+  // Fetch submissions on mount
+  useEffect(() => {
+    fetchSubmissions();
+  }, []);
 
   const createSubmission = async (data: FormData) => {
     try {
@@ -61,7 +91,8 @@ export function SubmissionProvider({ children }: { children: React.ReactNode }) 
       error,
       fetchSubmissions,
       createSubmission,
-    }}> 
+      getSubmission
+    }}>
       {children}
     </SubmissionContext.Provider>
   );
@@ -69,7 +100,7 @@ export function SubmissionProvider({ children }: { children: React.ReactNode }) 
 
 export const useSubmissions = () => {
   const context = useContext(SubmissionContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error('useSubmissions must be used within a SubmissionProvider');
   }
   return context;

@@ -7,72 +7,42 @@ import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { motion } from "framer-motion"
 import { ChevronDown, ChevronUp, Medal, Star } from "lucide-react"
+import { useLeaderboard } from "@/providers/leaderboard-provider"
+import Link from "next/link"
+import { Skeleton } from "@/components/ui/skeleton"
 
 export function LeaderboardTable() {
-  const [sortBy, setSortBy] = useState("rank")
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc")
-
-  // Mock data for the leaderboard
-  const participants = [
-    {
-      id: 1,
-      name: "Sarah Johnson",
-      avatar: "/placeholder.svg?height=40&width=40",
-      submissions: 28,
-      points: 1240,
-      streak: 28,
-      rating: 4.9,
-      badges: ["Early Bird", "Perfect Streak"],
-    },
-    {
-      id: 2,
-      name: "Michael Chen",
-      avatar: "/placeholder.svg?height=40&width=40",
-      submissions: 27,
-      points: 1180,
-      streak: 27,
-      rating: 4.8,
-      badges: ["Code Master"],
-    },
-    {
-      id: 3,
-      name: "Olivia Rodriguez",
-      avatar: "/placeholder.svg?height=40&width=40",
-      submissions: 26,
-      points: 1120,
-      streak: 24,
-      rating: 4.7,
-      badges: ["UI Wizard"],
-    },
-    {
-      id: 4,
-      name: "David Kim",
-      avatar: "/placeholder.svg?height=40&width=40",
-      submissions: 25,
-      points: 1050,
-      streak: 25,
-      rating: 4.6,
-      badges: ["Bug Hunter"],
-    },
-    {
-      id: 5,
-      name: "Emma Wilson",
-      avatar: "/placeholder.svg?height=40&width=40",
-      submissions: 24,
-      points: 980,
-      streak: 20,
-      rating: 4.5,
-      badges: ["Fast Learner"],
-    },
-  ]
+  const { 
+    participants, 
+    loading, 
+    sortBy, 
+    setSortBy, 
+    sortOrder, 
+    setSortOrder 
+  } = useLeaderboard()
 
   const handleSort = (column: string) => {
     if (sortBy === column) {
       setSortOrder(sortOrder === "asc" ? "desc" : "asc")
     } else {
       setSortBy(column)
-      setSortOrder("asc")
+      setSortOrder("desc")
     }
+  }
+
+  if (loading) {
+    return (
+      <Card className="glass-card overflow-hidden border-border/30">
+        <div className="p-6 space-y-4">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="flex items-center gap-4">
+              <Skeleton className="h-10 w-10 rounded-full" />
+              <Skeleton className="h-4 w-48" />
+            </div>
+          ))}
+        </div>
+      </Card>
+    )
   }
 
   return (
@@ -89,8 +59,9 @@ export function LeaderboardTable() {
                   onClick={() => handleSort("rank")}
                 >
                   Rank
-                  {sortBy === "rank" &&
-                    (sortOrder === "asc" ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />)}
+                  {sortBy === "rank" && (
+                    sortOrder === "asc" ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />
+                  )}
                 </Button>
               </th>
               <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Participant</th>
@@ -155,51 +126,51 @@ export function LeaderboardTable() {
                 className="border-b border-border/30 last:border-0 hover:bg-muted/50 transition-colors"
               >
                 <td className="px-4 py-3 text-sm">
-                  <div
-                    className={`flex items-center justify-center w-8 h-8 rounded-full ${
-                      index === 0
-                        ? "bg-yellow-500/20"
-                        : index === 1
-                          ? "bg-gray-400/20"
-                          : index === 2
-                            ? "bg-amber-700/20"
-                            : "bg-muted"
-                    }`}
-                  >
-                    {index === 0 ? (
-                      <Medal className="h-4 w-4 text-yellow-500" />
-                    ) : index === 1 ? (
-                      <Medal className="h-4 w-4 text-gray-400" />
-                    ) : index === 2 ? (
-                      <Medal className="h-4 w-4 text-amber-700" />
+                  <div className={`flex items-center justify-center w-8 h-8 rounded-full ${
+                    index === 0 ? "bg-yellow-500/20" :
+                    index === 1 ? "bg-gray-400/20" :
+                    index === 2 ? "bg-amber-700/20" :
+                    "bg-muted"
+                  }`}>
+                    {index <= 2 ? (
+                      <Medal className={`h-4 w-4 ${
+                        index === 0 ? "text-yellow-500" :
+                        index === 1 ? "text-gray-400" :
+                        "text-amber-700"
+                      }`} />
                     ) : (
-                      index + 1
+                      participant.rank
                     )}
                   </div>
                 </td>
                 <td className="px-4 py-3 text-sm">
-                  <div className="flex items-center gap-3">
+                  <Link href={`/profile/${participant.id}`} className="flex items-center gap-3 hover:opacity-80">
                     <Avatar className="h-8 w-8 border border-primary/20">
-                      <AvatarImage src={participant.avatar} alt={participant.name} />
-                      <AvatarFallback>{participant.name.charAt(0)}</AvatarFallback>
+                      <AvatarImage src={participant.user_avatar} alt={participant.user_name} />
+                      <AvatarFallback>{participant.user_name.charAt(0)}</AvatarFallback>
                     </Avatar>
-                    <span className="font-medium">{participant.name}</span>
-                  </div>
+                    <span className="font-medium">{participant.user_name}</span>
+                  </Link>
                 </td>
-                <td className="px-4 py-3 text-sm">{participant.submissions}</td>
+                <td className="px-4 py-3 text-sm">{participant.submissions_count}</td>
                 <td className="px-4 py-3 text-sm font-medium">{participant.points}</td>
-                <td className="px-4 py-3 text-sm">{participant.streak} days</td>
+                <td className="px-4 py-3 text-sm">{participant.current_streak} days</td>
                 <td className="px-4 py-3 text-sm">
                   <div className="flex items-center gap-1">
                     <Star className="h-4 w-4 fill-yellow-500 text-yellow-500" />
-                    <span>{participant.rating}</span>
+                    <span>{participant.average_rating.toFixed(1)}</span>
                   </div>
                 </td>
                 <td className="px-4 py-3 text-sm">
                   <div className="flex flex-wrap gap-1">
                     {participant.badges.map((badge) => (
-                      <Badge key={badge} variant="outline" className="text-xs badge-futuristic">
-                        {badge}
+                      <Badge 
+                        key={badge.id} 
+                        variant="outline" 
+                        className="text-xs badge-futuristic"
+                        title={badge.badge_details.description}
+                      >
+                        {badge.badge_details.name}
                       </Badge>
                     ))}
                   </div>

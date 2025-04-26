@@ -16,6 +16,7 @@ import { useForm } from "react-hook-form"
 import api from "@/services/api"
 import { useSubmissions } from "@/providers/submission-provider"
 import { useDropzone } from "react-dropzone"
+import ImageNext from "next/image"
 
 type SubmissionFormData = {
   title: string
@@ -83,21 +84,22 @@ export function SubmissionForm() {
     
     // Handle main preview image
     if (mainFile && !previewImage) {
-      setValue('preview_image_file', mainFile);
-      setPreviewImage(URL.createObjectURL(mainFile));
+      setValue('preview_image_file', mainFile)
+      const previewUrl = URL.createObjectURL(mainFile)
+      setPreviewImage(previewUrl)
     }
     
     // Handle additional images (up to 5 total)
-    const remainingSlots = 5 - additionalImages.length;
+    const remainingSlots = 5 - additionalImages.length
     const newImages = otherFiles.slice(0, remainingSlots).map(file => ({
       file,
       preview: URL.createObjectURL(file)
-    }));
+    }))
     
     if (newImages.length > 0) {
-      const updatedImages = [...additionalImages, ...newImages];
-      setAdditionalImages(updatedImages);
-      setValue('additional_images', updatedImages.map(img => img.file));
+      const updatedImages = [...additionalImages, ...newImages]
+      setAdditionalImages(updatedImages)
+      setValue('additional_images', updatedImages.map(img => img.file))
     }
   }, [setValue, additionalImages, previewImage])
 
@@ -109,31 +111,28 @@ export function SubmissionForm() {
     maxFiles: 6, // Main preview + 5 additional
   })
 
-  const removeMainPreview = () => {
-    if (previewImage) {
-      URL.revokeObjectURL(previewImage);
-      setPreviewImage(null);
-      setValue('preview_image_file', undefined);
-    }
-  };
-
-  const removeAdditionalImage = (index: number) => {
-    setAdditionalImages(prev => {
-      const newImages = [...prev];
-      URL.revokeObjectURL(newImages[index].preview);
-      newImages.splice(index, 1);
-      setValue('additional_images', newImages.map(img => img.file));
-      return newImages;
-    });
-  };
-
-  // Clean up URLs on unmount
+  // Cleanup preview URLs when component unmounts
   useEffect(() => {
     return () => {
-      if (previewImage) URL.revokeObjectURL(previewImage);
-      additionalImages.forEach(img => URL.revokeObjectURL(img.preview));
-    };
-  }, [previewImage, additionalImages]);
+      if (previewImage) URL.revokeObjectURL(previewImage)
+      additionalImages.forEach(img => URL.revokeObjectURL(img.preview))
+    }
+  }, [previewImage, additionalImages])
+
+  // Remove main preview image
+  const removeMainPreview = () => {
+    if (previewImage) URL.revokeObjectURL(previewImage)
+    setPreviewImage(null)
+    setValue('preview_image_file', undefined)
+  }
+
+  // Remove additional image
+  const removeAdditionalImage = (index: number) => {
+    URL.revokeObjectURL(additionalImages[index].preview)
+    const newImages = additionalImages.filter((_, i) => i !== index)
+    setAdditionalImages(newImages)
+    setValue('additional_images', newImages.map(img => img.file))
+  }
 
   const formatUrl = (url: string): string => {
     if (!url) return url;
@@ -146,26 +145,25 @@ export function SubmissionForm() {
     try {
       const formData = new FormData();
       
-      // Format URLs before submission
-      formData.append('repository_url', formatUrl(data.repository_url));
-      if (data.live_demo_url) {
-        formData.append('live_demo_url', formatUrl(data.live_demo_url));
-      }
-      
-      // Add other fields
+      // Add basic fields
       formData.append('title', data.title);
       formData.append('description', data.description);
+      formData.append('repository_url', data.repository_url);
+      if (data.live_demo_url) {
+        formData.append('live_demo_url', data.live_demo_url);
+      }
       formData.append('branch', data.branch);
       formData.append('technologies', JSON.stringify(data.technologies));
 
-      // Add images
+      // Add main preview image
       if (data.preview_image_file) {
         formData.append('preview_image_file', data.preview_image_file);
       }
       
+      // Add additional images
       if (data.additional_images?.length) {
-        data.additional_images.forEach((file, index) => {
-          formData.append(`additional_images[${index}]`, file);
+        data.additional_images.forEach((file) => {
+          formData.append('additional_images', file);
         });
       }
 
@@ -182,6 +180,7 @@ export function SubmissionForm() {
       setPreviewImage(null);
       setAdditionalImages([]);
     } catch (error: any) {
+      console.error('Submission error:', error);
       toast({
         title: "Error",
         description: error.response?.data?.message || "Failed to submit project",
@@ -196,25 +195,6 @@ export function SubmissionForm() {
     { id: 3, title: "Media & Screenshots" },
     { id: 4, title: "Review & Submit" },
   ]
-
-  // Update the image preview section with smaller remove buttons
-  const ImagePreview = ({ src, onRemove }: { src: string; onRemove: () => void }) => (
-    <div className="relative aspect-video w-full overflow-hidden rounded-lg border">
-      <Image
-        src={src}
-        alt="Preview"
-        fill
-        className="object-cover"
-      />
-      <button
-        type="button"
-        onClick={onRemove}
-        className="absolute top-2 right-2 h-6 w-6 rounded-full bg-black/50 text-white hover:bg-black/70 flex items-center justify-center"
-      >
-        ×
-      </button>
-    </div>
-  );
 
   return (
     <div className="space-y-8">
@@ -364,39 +344,38 @@ export function SubmissionForm() {
                     <CardTitle>Media & Screenshots</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-6">
+                    <div className="space-y-4">
+                      {/* Dropzone */}
                       <div
                         {...getRootProps()}
-                        className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors
-                          ${isDragActive ? "border-primary bg-primary/5" : "border-border"}
-                          hover:border-primary hover:bg-primary/5 cursor-pointer`}
+                        className="border-2 border-dashed border-border rounded-lg p-6 text-center cursor-pointer hover:border-primary/50 transition-colors"
                       >
                         <input {...getInputProps()} />
-                        <div className="flex flex-col items-center gap-2">
-                          <Upload className="h-8 w-8 text-muted-foreground" />
-                          {isDragActive ? (
-                            <p>Drop your images here...</p>
-                          ) : (
-                            <>
-                              <p className="text-sm text-muted-foreground">
-                                Drag & drop images here, or click to select
-                              </p>
-                              <p className="text-xs text-muted-foreground">
-                                First image will be the main preview. You can add up to 5 additional images.
-                              </p>
-                              <Button type="button" variant="secondary" size="sm">
-                                Browse Files
-                              </Button>
-                            </>
-                          )}
-                        </div>
+                        <p>Drag & drop images here, or click to select files</p>
+                        <p className="text-sm text-muted-foreground mt-2">
+                          First image will be the main preview
+                        </p>
                       </div>
 
                       {/* Main Preview Image */}
                       {previewImage && (
                         <div className="space-y-2">
                           <Label>Main Preview Image</Label>
-                          <ImagePreview src={previewImage} onRemove={removeMainPreview} />
+                          <div className="relative aspect-video w-full overflow-hidden rounded-lg border">
+                            <ImageNext
+                              src={previewImage}
+                              alt="Preview"
+                              fill
+                              className="object-cover"
+                            />
+                            <button
+                              type="button"
+                              onClick={removeMainPreview}
+                              className="absolute top-2 right-2 h-6 w-6 rounded-full bg-black/50 text-white hover:bg-black/70 flex items-center justify-center"
+                            >
+                              ×
+                            </button>
+                          </div>
                         </div>
                       )}
 
@@ -406,11 +385,21 @@ export function SubmissionForm() {
                           <Label>Additional Images ({additionalImages.length}/5)</Label>
                           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                             {additionalImages.map((img, index) => (
-                              <ImagePreview 
-                                key={index}
-                                src={img.preview}
-                                onRemove={() => removeAdditionalImage(index)}
-                              />
+                              <div key={index} className="relative aspect-video w-full overflow-hidden rounded-lg border">
+                                <ImageNext
+                                  src={img.preview}
+                                  alt={`Additional image ${index + 1}`}
+                                  fill
+                                  className="object-cover"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => removeAdditionalImage(index)}
+                                  className="absolute top-2 right-2 h-6 w-6 rounded-full bg-black/50 text-white hover:bg-black/70 flex items-center justify-center"
+                                >
+                                  ×
+                                </button>
+                              </div>
                             ))}
                           </div>
                         </div>
@@ -476,7 +465,21 @@ export function SubmissionForm() {
                           <div>
                             <h3 className="font-medium">Preview Image</h3>
                             <div className="mt-2 max-w-md">
-                              <ImagePreview src={previewImage} onRemove={removeMainPreview} />
+                              <div className="relative aspect-video w-full overflow-hidden rounded-lg border">
+                                <ImageNext
+                                  src={previewImage}
+                                  alt="Preview"
+                                  fill
+                                  className="object-cover"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={removeMainPreview}
+                                  className="absolute top-2 right-2 h-6 w-6 rounded-full bg-black/50 text-white hover:bg-black/70 flex items-center justify-center"
+                                >
+                                  ×
+                                </button>
+                              </div>
                             </div>
                           </div>
                         )}
@@ -486,11 +489,21 @@ export function SubmissionForm() {
                             <h3 className="font-medium">Additional Images ({additionalImages.length})</h3>
                             <div className="grid grid-cols-3 gap-4 mt-2">
                               {additionalImages.map((img, index) => (
-                                <ImagePreview 
-                                  key={index}
-                                  src={img.preview}
-                                  onRemove={() => removeAdditionalImage(index)}
-                                />
+                                <div key={index} className="relative aspect-video w-full overflow-hidden rounded-lg border">
+                                  <ImageNext
+                                    src={img.preview}
+                                    alt={`Additional image ${index + 1}`}
+                                    fill
+                                    className="object-cover"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => removeAdditionalImage(index)}
+                                    className="absolute top-2 right-2 h-6 w-6 rounded-full bg-black/50 text-white hover:bg-black/70 flex items-center justify-center"
+                                  >
+                                    ×
+                                  </button>
+                                </div>
                               ))}
                             </div>
                           </div>
