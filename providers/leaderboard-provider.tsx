@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useEffect } from "react"
 import api from "@/services/api"
+
 type LeaderboardStats = {
   total_submissions: number
   active_participants: number
@@ -31,6 +32,13 @@ type Participant = {
     earned_at: string
   }>
   rank: number
+}
+
+type LeaderboardResponse = {
+  count: number
+  next: string | null
+  previous: string | null
+  results: Participant[]
 }
 
 type LeaderboardContextType = {
@@ -66,11 +74,11 @@ export function LeaderboardProvider({ children }: { children: React.ReactNode })
       setLoading(true)
       const [statsResponse, participantsResponse] = await Promise.all([
         api.get('/api/leaderboards/leaderboard/overview/'),
-        api.get('/api/leaderboards/leaderboard/')
+        api.get<LeaderboardResponse>('/api/leaderboards/leaderboard/')
       ])
 
       setStats(statsResponse.data)
-      setParticipants(Array.isArray(participantsResponse.data) ? participantsResponse.data : [])
+      setParticipants(participantsResponse.data.results)
     } catch (error) {
       setError('Failed to fetch leaderboard data')
       console.error('Error fetching leaderboard:', error)
@@ -83,7 +91,7 @@ export function LeaderboardProvider({ children }: { children: React.ReactNode })
     fetchLeaderboard()
   }, [])
 
-  const filteredAndSortedParticipants = Array.isArray(participants) ? participants
+  const filteredAndSortedParticipants = participants
     .filter(p => {
       if (searchTerm) {
         return p.user_name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -111,7 +119,7 @@ export function LeaderboardProvider({ children }: { children: React.ReactNode })
       }
 
       return compareValue(sortBy as keyof Participant)
-    }) : []
+    })
 
   return (
     <LeaderboardContext.Provider

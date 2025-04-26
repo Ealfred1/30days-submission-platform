@@ -146,10 +146,10 @@ export function LeaderboardTable() {
                 <td className="px-4 py-3 text-sm">
                   <Link href={`/profile/${participant.id}`} className="flex items-center gap-3 hover:opacity-80">
                     <Avatar className="h-8 w-8 border border-primary/20">
-                      <AvatarImage src={participant.user_avatar} alt={participant.user_name} />
-                      <AvatarFallback>{participant.user_name.charAt(0)}</AvatarFallback>
+                      <AvatarImage src={participant.user_avatar} alt={participant.user_name || 'User'} />
+                      <AvatarFallback>{(participant.user_name || 'U').charAt(0).toUpperCase()}</AvatarFallback>
                     </Avatar>
-                    <span className="font-medium">{participant.user_name}</span>
+                    <span className="font-medium">{participant.user_name || 'Anonymous User'}</span>
                   </Link>
                 </td>
                 <td className="px-4 py-3 text-sm">{participant.submissions_count}</td>
@@ -158,7 +158,7 @@ export function LeaderboardTable() {
                 <td className="px-4 py-3 text-sm">
                   <div className="flex items-center gap-1">
                     <Star className="h-4 w-4 fill-yellow-500 text-yellow-500" />
-                    <span>{participant.average_rating.toFixed(1)}</span>
+                    <span>{Number(participant.average_rating).toFixed(1)}</span>
                   </div>
                 </td>
                 <td className="px-4 py-3 text-sm">
