@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect } from "react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Card, CardContent } from "@/components/ui/card"
 import { motion } from "framer-motion"
@@ -7,8 +8,12 @@ import { MessageSquare, Star, ThumbsUp } from "lucide-react"
 import { useReviews } from "@/contexts/reviews-context"
 import Link from "next/link"
 
-export function ReviewsList() {
-  const { reviews, incrementHelpful } = useReviews()
+export function ReviewsList({ userId }: { userId?: string }) {
+  const { reviews, fetchReviews, incrementHelpful } = useReviews()
+
+  useEffect(() => {
+    fetchReviews(userId)
+  }, [userId, fetchReviews])
 
   return (
     <div className="space-y-6">
@@ -72,6 +77,11 @@ export function ReviewsList() {
           </Card>
         </motion.div>
       ))}
+      {reviews.length === 0 && (
+        <div className="text-center text-muted-foreground">
+          No reviews yet
+        </div>
+      )}
     </div>
   )
 }

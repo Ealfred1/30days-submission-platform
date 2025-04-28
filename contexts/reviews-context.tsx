@@ -17,6 +17,7 @@ interface Review {
 
 interface ReviewsContextType {
   reviews: Review[]
+  fetchReviews: (userId?: string) => Promise<void>
   searchTerm: string
   projectFilter: string
   ratingFilter: string
@@ -34,6 +35,21 @@ export function ReviewsProvider({ children }: { children: React.ReactNode }) {
   const [searchTerm, setSearchTerm] = useState("")
   const [projectFilter, setProjectFilter] = useState("all")
   const [ratingFilter, setRatingFilter] = useState("all")
+
+  const fetchReviews = async (userId?: string) => {
+    try {
+      const url = userId 
+        ? `/api/reviews?userId=${userId}`
+        : '/api/reviews'
+      const response = await fetch(url)
+      if (response.ok) {
+        const data = await response.json()
+        setReviews(data.results || [])
+      }
+    } catch (error) {
+      console.error("Failed to fetch reviews:", error)
+    }
+  }
 
   const incrementHelpful = async (reviewId: number) => {
     try {
@@ -71,6 +87,7 @@ export function ReviewsProvider({ children }: { children: React.ReactNode }) {
   return (
     <ReviewsContext.Provider value={{
       reviews,
+      fetchReviews,
       searchTerm,
       projectFilter,
       ratingFilter,

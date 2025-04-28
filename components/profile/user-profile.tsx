@@ -6,56 +6,61 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import { Star } from "lucide-react"
 import { useState, useEffect } from "react"
-import { useToast } from "@/components/ui/use-toast"
+import { useReviews } from "@/contexts/reviews-context"
+
+interface User {
+  id: number
+  name: string
+  avatar: string
+  email: string
+  bio: string
+  points: number
+  submissions_count: number
+  average_rating: number
+}
 
 export function UserProfile({ userId }: { userId: string }) {
+  const [user, setUser] = useState<User | null>(null)
   const [rating, setRating] = useState(0)
   const [comment, setComment] = useState("")
-  const { toast } = useToast()
-  const [user, setUser] = useState<any>(null)
+  const [hoveredStar, setHoveredStar] = useState(0)
+  const { addReview } = useReviews()
 
-  // Fetch user data
   useEffect(() => {
     const fetchUser = async () => {
       try {
         const response = await fetch(`/api/users/${userId}`)
-        const data = await response.json()
-        setUser(data)
+        if (response.ok) {
+          const data = await response.json()
+          setUser(data)
+        }
       } catch (error) {
-        console.error("Error fetching user:", error)
+        console.error("Failed to fetch user:", error)
       }
     }
     fetchUser()
   }, [userId])
 
   const handleSubmitReview = async () => {
-    try {
-      const response = await fetch("/api/reviews", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          userId,
-          rating,
-          comment,
-        }),
-      })
+    if (!user || !rating || !comment) return
 
-      if (response.ok) {
-        toast({
-          title: "Review submitted",
-          description: "Thank you for your feedback!",
-        })
-        setRating(0)
-        setComment("")
-      }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to submit review",
-        variant: "destructive",
+    try {
+      await addReview({
+        user: {
+          id: user.id,
+          name: user.name,
+          avatar: user.avatar
+        },
+        project: "User Profile", // You might want to customize this
+        rating,
+        comment
       })
+      
+      // Reset form
+      setRating(0)
+      setComment("")
+    } catch (error) {
+      console.error("Failed to submit review:", error)
     }
   }
 
@@ -64,40 +69,69 @@ export function UserProfile({ userId }: { userId: string }) {
   return (
     <Card className="glass-card">
       <CardContent className="p-6">
-        <div className="flex items-start gap-4">
-          <Avatar className="h-20 w-20">
-            <AvatarImage src={user.avatar} alt={user.name} />
-            <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-          </Avatar>
-
-          <div className="flex-1">
-            <h1 className="text-2xl font-bold">{user.name}</h1>
-            <div className="text-muted-foreground">{user.bio}</div>
-
-            <div className="mt-6">
-              <div className="flex items-center gap-2 mb-4">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <Star
-                    key={i}
-                    className={`h-6 w-6 cursor-pointer ${
-                      i < rating ? "fill-yellow-500 text-yellow-500" : "text-muted"
-                    }`}
-                    onClick={() => setRating(i + 1)}
-                  />
-                ))}
-              </div>
-
-              <Textarea
-                placeholder="Write your review..."
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-                className="mb-4"
-              />
-
-              <Button onClick={handleSubmitReview} disabled={!rating || !comment}>
-                Submit Review
-              </Button>
+        <div className="flex flex-col md:flex-row gap-6">
+          {/* User Info Section */}
+          <div className="flex flex-col items-center md:items-start gap-4 md:w-1/3">
+            <Avatar className="h-24 w-24">
+              <AvatarImage src={user.avatar} alt={user.name} />
+              <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+            </Avatar>
+            <div className="text-center md:text-left">
+              <h2 className="text-2xl font-bold">{user.name}</h2>
+              <p className="text-muted-foreground">{user.email}</p>
             </div>
+            <div className="w-full">
+              <div className="flex justify-between text-sm text-muted-foreground mb-2">
+                <span>Points</span>
+                <span>{user.points}</span>
+              </div>
+              <div className="flex justify-between text-sm text-muted-foreground mb-2">
+                <span>Submissions</span>
+                <span>{user.submissions_count}</span>
+              </div>
+              <div className="flex justify-between text-sm text-muted-foreground">
+                <span>Average Rating</span>
+                <div className="flex items-center gap-1">
+                  <span>{user.average_rating.toFixed(1)}</span>
+                  <Star className="h-4 w-4 fill-yellow-500 text-yellow-500" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Review Form Section */}
+          <div className="md:w-2/3 space-y-4">
+            <h3 className="text-xl font-semibold">Leave a Review</h3>
+            <div className="flex gap-1">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  onMouseEnter={() => setHoveredStar(star)}
+                  onMouseLeave={() => setHoveredStar(0)}
+                  onClick={() => setRating(star)}
+                >
+                  <Star
+                    className={`h-6 w-6 ${
+                      star <= (hoveredStar || rating)
+                        ? "fill-yellow-500 text-yellow-500"
+                        : "text-muted"
+                    }`}
+                  />
+                </button>
+              ))}
+            </div>
+            <Textarea
+              placeholder="Write your review..."
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              className="min-h-[100px]"
+            />
+            <Button 
+              onClick={handleSubmitReview}
+              disabled={!rating || !comment}
+            >
+              Submit Review
+            </Button>
           </div>
         </div>
       </CardContent>
