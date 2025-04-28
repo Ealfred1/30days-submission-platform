@@ -2,17 +2,32 @@
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Search, Star } from "lucide-react"
+import { useReviews } from "@/contexts/reviews-context"
 
 export function ReviewFilters() {
+  const { 
+    searchTerm, 
+    setSearchTerm, 
+    projectFilter, 
+    setProjectFilter, 
+    ratingFilter, 
+    setRatingFilter 
+  } = useReviews()
+
   return (
     <div className="flex flex-col sm:flex-row gap-4">
       <div className="relative flex-1">
         <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-        <Input placeholder="Search reviews..." className="pl-9" />
+        <Input 
+          placeholder="Search reviews..." 
+          className="pl-9" 
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
       </div>
 
       <div className="flex gap-4">
-        <Select defaultValue="all">
+        <Select value={projectFilter} onValueChange={setProjectFilter}>
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Project" />
           </SelectTrigger>
@@ -25,7 +40,7 @@ export function ReviewFilters() {
           </SelectContent>
         </Select>
 
-        <Select defaultValue="all">
+        <Select value={ratingFilter} onValueChange={setRatingFilter}>
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Rating" />
           </SelectTrigger>
@@ -71,4 +86,3 @@ export function ReviewFilters() {
     </div>
   )
 }
-
