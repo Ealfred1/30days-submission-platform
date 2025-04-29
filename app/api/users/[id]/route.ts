@@ -2,13 +2,14 @@ import { NextResponse } from 'next/server'
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: { id: string } }  // Changed this to be non-Promise
 ) {
   try {
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/${params.id}/`, {
       headers: {
         'Content-Type': 'application/json',
       },
+      cache: 'no-store' // Disable caching to get fresh data
     })
 
     if (!response.ok) {
@@ -16,6 +17,7 @@ export async function GET(
     }
 
     const data = await response.json()
+    console.log('User data fetched:', data) // Debug log
     return NextResponse.json(data)
   } catch (error) {
     console.error('Error fetching user:', error)

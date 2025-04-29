@@ -21,6 +21,8 @@ interface User {
 
 export function UserProfile({ userId }: { userId: string }) {
   const [user, setUser] = useState<User | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [rating, setRating] = useState(0)
   const [comment, setComment] = useState("")
   const [hoveredStar, setHoveredStar] = useState(0)
@@ -29,16 +31,36 @@ export function UserProfile({ userId }: { userId: string }) {
   useEffect(() => {
     const fetchUser = async () => {
       try {
+        setLoading(true)
+        setError(null)
+        console.log('Fetching user with ID:', userId) // Debug log
+
         const response = await fetch(`/api/users/${userId}`)
-        if (response.ok) {
-          const data = await response.json()
-          setUser(data)
+        console.log('Response status:', response.status) // Debug log
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch user: ${response.status}`)
         }
+
+        const data = await response.json()
+        console.log('User data:', data) // Debug log
+        
+        if (data.error) {
+          throw new Error(data.error)
+        }
+
+        setUser(data)
       } catch (error) {
-        console.error("Failed to fetch user:", error)
+        console.error('Error fetching user:', error)
+        setError(error instanceof Error ? error.message : 'Failed to fetch user')
+      } finally {
+        setLoading(false)
       }
     }
-    fetchUser()
+
+    if (userId) {
+      fetchUser()
+    }
   }, [userId])
 
   const handleSubmitReview = async () => {
@@ -51,7 +73,7 @@ export function UserProfile({ userId }: { userId: string }) {
           name: user.name,
           avatar: user.avatar
         },
-        project: "User Profile", // You might want to customize this
+        project: "User Profile",
         rating,
         comment
       })
@@ -64,7 +86,41 @@ export function UserProfile({ userId }: { userId: string }) {
     }
   }
 
-  if (!user) return <div>Loading...</div>
+  if (loading) {
+    return (
+      <Card className="glass-card">
+        <CardContent className="p-6">
+          <div className="flex items-center justify-center h-40">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (error) {
+    return (
+      <Card className="glass-card">
+        <CardContent className="p-6">
+          <div className="text-center text-red-500">
+            {error}
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (!user) {
+    return (
+      <Card className="glass-card">
+        <CardContent className="p-6">
+          <div className="text-center text-muted-foreground">
+            User not found
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
 
   return (
     <Card className="glass-card">
@@ -92,7 +148,7 @@ export function UserProfile({ userId }: { userId: string }) {
               <div className="flex justify-between text-sm text-muted-foreground">
                 <span>Average Rating</span>
                 <div className="flex items-center gap-1">
-                  <span>{user.average_rating.toFixed(1)}</span>
+                  <span>{user.average_rating?.toFixed(1) || '0.0'}</span>
                   <Star className="h-4 w-4 fill-yellow-500 text-yellow-500" />
                 </div>
               </div>
