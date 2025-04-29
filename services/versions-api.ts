@@ -30,6 +30,7 @@ export interface VersionComparison {
 
 export const versionsApi = {
   getAll: async () => {
+    console.log('Fetching versions from:', `${api.defaults.baseURL}/api/versions/`)
     const response = await api.get<Version[]>('/api/versions/')
     return response.data
   },
