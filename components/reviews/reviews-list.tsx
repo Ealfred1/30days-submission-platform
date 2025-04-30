@@ -13,7 +13,7 @@ export function ReviewsList({ userId }: { userId?: string }) {
 
   useEffect(() => {
     fetchReviews(userId)
-  }, [userId, fetchReviews])
+  }, [userId])
 
   return (
     <div className="space-y-6">
