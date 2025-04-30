@@ -22,11 +22,7 @@ export interface CreateReviewData {
 
 export const reviewsApi = {
   create: async (data: CreateReviewData): Promise<Review> => {
-    const response = await api.post<Review>('/api/reviews/', {
-      project: data.project,
-      rating: data.rating,
-      comment: data.comment
-    })
+    const response = await api.post<Review>('/api/reviews/', data)
     return response.data
   },
 
@@ -46,7 +42,7 @@ export const reviewsApi = {
   },
 
   incrementHelpful: async (reviewId: number): Promise<Review> => {
-    const response = await api.post<Review>(`/api/reviews/${reviewId}/helpful/`)
+    const response = await api.post<Review>(`/api/reviews/${reviewId}/mark_helpful/`)
     return response.data
   }
 } 

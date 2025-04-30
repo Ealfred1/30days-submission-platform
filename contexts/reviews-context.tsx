@@ -1,5 +1,5 @@
 "use client"
-import { createContext, useContext, useState } from "react"
+import { createContext, useContext, useState, useEffect } from "react"
 import { Review, reviewsApi, CreateReviewData } from "@/services/reviews-api"
 
 interface ReviewsContextType {
@@ -23,19 +23,27 @@ export function ReviewsProvider({ children }: { children: React.ReactNode }) {
   const [projectFilter, setProjectFilter] = useState("all")
   const [ratingFilter, setRatingFilter] = useState("all")
 
+  // Fetch reviews on mount
+  useEffect(() => {
+    fetchReviews()
+  }, [])
+
   const fetchReviews = async (userId?: string) => {
     try {
-      let response
+      console.log("Fetching reviews for userId:", userId) // Debug log
+      let response: Review[]
+      
       if (userId) {
         response = await reviewsApi.getByUser(userId)
       } else {
         response = await reviewsApi.getAll()
       }
-      // Ensure we're setting an array
+
+      console.log("Fetched reviews:", response) // Debug log
       setReviews(Array.isArray(response) ? response : [])
     } catch (error) {
       console.error("Failed to fetch reviews:", error)
-      setReviews([]) // Set empty array on error
+      setReviews([])
     }
   }
 
@@ -55,10 +63,11 @@ export function ReviewsProvider({ children }: { children: React.ReactNode }) {
   const addReview = async (reviewData: CreateReviewData) => {
     try {
       const newReview = await reviewsApi.create(reviewData)
-      setReviews([newReview, ...reviews])
+      setReviews(prevReviews => [newReview, ...prevReviews])
+      return newReview
     } catch (error) {
       console.error("Failed to add review:", error)
-      throw error // Re-throw to handle in the component
+      throw error
     }
   }
 

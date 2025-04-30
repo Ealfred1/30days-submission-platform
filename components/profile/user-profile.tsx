@@ -8,6 +8,7 @@ import { Star } from "lucide-react"
 import { useState, useEffect } from "react"
 import { useReviews } from "@/contexts/reviews-context"
 import api from "@/services/api"
+import { ReviewsList } from "@/components/reviews/reviews-list"
 
 interface User {
   id: number
@@ -124,74 +125,82 @@ export function UserProfile({ userId }: { userId: string }) {
   }
 
   return (
-    <Card className="glass-card">
-      <CardContent className="p-6">
-        <div className="flex flex-col md:flex-row gap-6">
-          {/* User Info Section */}
-          <div className="flex flex-col items-center md:items-start gap-4 md:w-1/3">
-            <Avatar className="h-24 w-24">
-              <AvatarImage src={user.avatar} alt={user.name} />
-              <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-            </Avatar>
-            <div className="text-center md:text-left">
-              <h2 className="text-2xl font-bold">{user.name}</h2>
-              <p className="text-muted-foreground">{user.email}</p>
-            </div>
-            <div className="w-full">
-              <div className="flex justify-between text-sm text-muted-foreground mb-2">
-                <span>Points</span>
-                <span>{user.points}</span>
+    <>
+      <Card className="glass-card mb-6">
+        <CardContent className="p-6">
+          <div className="flex flex-col md:flex-row gap-6">
+            {/* User Info Section */}
+            <div className="flex flex-col items-center md:items-start gap-4 md:w-1/3">
+              <Avatar className="h-24 w-24">
+                <AvatarImage src={user.avatar} alt={user.name} />
+                <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+              </Avatar>
+              <div className="text-center md:text-left">
+                <h2 className="text-2xl font-bold">{user.name}</h2>
+                <p className="text-muted-foreground">{user.email}</p>
               </div>
-              <div className="flex justify-between text-sm text-muted-foreground mb-2">
-                <span>Submissions</span>
-                <span>{user.submissions_count}</span>
-              </div>
-              <div className="flex justify-between text-sm text-muted-foreground">
-                <span>Average Rating</span>
-                <div className="flex items-center gap-1">
-                  <span>{user.average_rating?.toFixed(1) || '0.0'}</span>
-                  <Star className="h-4 w-4 fill-yellow-500 text-yellow-500" />
+              <div className="w-full">
+                <div className="flex justify-between text-sm text-muted-foreground mb-2">
+                  <span>Points</span>
+                  <span>{user.points}</span>
+                </div>
+                <div className="flex justify-between text-sm text-muted-foreground mb-2">
+                  <span>Submissions</span>
+                  <span>{user.submissions_count}</span>
+                </div>
+                <div className="flex justify-between text-sm text-muted-foreground">
+                  <span>Average Rating</span>
+                  <div className="flex items-center gap-1">
+                    <span>{user.average_rating?.toFixed(1) || '0.0'}</span>
+                    <Star className="h-4 w-4 fill-yellow-500 text-yellow-500" />
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* Review Form Section */}
-          <div className="md:w-2/3 space-y-4">
-            <h3 className="text-xl font-semibold">Leave a Review</h3>
-            <div className="flex gap-1">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <button
-                  key={star}
-                  onMouseEnter={() => setHoveredStar(star)}
-                  onMouseLeave={() => setHoveredStar(0)}
-                  onClick={() => setRating(star)}
-                >
-                  <Star
-                    className={`h-6 w-6 ${
-                      star <= (hoveredStar || rating)
-                        ? "fill-yellow-500 text-yellow-500"
-                        : "text-muted"
-                    }`}
-                  />
-                </button>
-              ))}
+            {/* Review Form Section */}
+            <div className="md:w-2/3 space-y-4">
+              <h3 className="text-xl font-semibold">Leave a Review</h3>
+              <div className="flex gap-1">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    onMouseEnter={() => setHoveredStar(star)}
+                    onMouseLeave={() => setHoveredStar(0)}
+                    onClick={() => setRating(star)}
+                  >
+                    <Star
+                      className={`h-6 w-6 ${
+                        star <= (hoveredStar || rating)
+                          ? "fill-yellow-500 text-yellow-500"
+                          : "text-muted"
+                      }`}
+                    />
+                  </button>
+                ))}
+              </div>
+              <Textarea
+                placeholder="Write your review..."
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                className="min-h-[100px]"
+              />
+              <Button 
+                onClick={handleSubmitReview}
+                disabled={!rating || !comment}
+              >
+                Submit Review
+              </Button>
             </div>
-            <Textarea
-              placeholder="Write your review..."
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
-              className="min-h-[100px]"
-            />
-            <Button 
-              onClick={handleSubmitReview}
-              disabled={!rating || !comment}
-            >
-              Submit Review
-            </Button>
           </div>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+      
+      {/* Add ReviewsList component */}
+      {/* <div className="mt-8">
+        <h3 className="text-xl font-semibold mb-4">Reviews</h3>
+        <ReviewsList userId={userId} />
+      </div> */}
+    </>
   )
 } 

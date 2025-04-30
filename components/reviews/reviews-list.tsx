@@ -7,23 +7,38 @@ import { StarFilledIcon } from "@radix-ui/react-icons"
 import { format } from "date-fns"
 import { useReviews } from "@/contexts/reviews-context"
 import { Review } from "@/services/reviews-api"
+import { useEffect } from "react"
 
-export function ReviewsList() {
-  const { reviews } = useReviews()
+export function ReviewsList({ userId }: { userId?: string }) {
+  const { reviews, fetchReviews } = useReviews()
+
+  // Fetch reviews when component mounts or userId changes
+  useEffect(() => {
+    console.log("Fetching reviews for userId:", userId)
+    fetchReviews(userId)
+  }, [userId])
 
   // Handle loading state
   if (!reviews) {
-    return <div>Loading...</div>
+    return (
+      <div className="flex justify-center items-center p-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    )
   }
 
   // Handle empty state
   if (reviews.length === 0) {
-    return <div>No reviews found.</div>
+    return (
+      <div className="text-center text-muted-foreground p-8">
+        No reviews found.
+      </div>
+    )
   }
 
   return (
     <div className="space-y-6">
-      {Array.isArray(reviews) && reviews.map((review: Review, index: number) => (
+      {reviews.map((review: Review, index: number) => (
         <motion.div
           key={review.id}
           initial={{ opacity: 0, y: 20 }}
