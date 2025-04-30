@@ -1,17 +1,69 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Search, Filter, Plus, Edit } from "lucide-react"
-import { adminApi } from "@/services/admin-api"
+import { adminApi, User } from "@/services/admin-api"
+import { useToast } from "@/components/ui/use-toast"
 
 export default function AdminUsersPage() {
+  const [users, setUsers] = useState<User[]>([])
+  const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
-  const [selectedUser, setSelectedUser] = useState(null)
+  const { toast } = useToast()
+
+  useEffect(() => {
+    fetchUsers()
+  }, [])
+
+  const fetchUsers = async () => {
+    try {
+      const data = await adminApi.getUsers()
+      setUsers(data)
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to fetch users",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handlePointsAdjustment = async (userId: number, points: number, reason: string) => {
+    try {
+      await adminApi.adjustUserPoints(userId, points, reason)
+      toast({
+        title: "Success",
+        description: "Points adjusted successfully",
+      })
+      fetchUsers() // Refresh the list
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to adjust points",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const filteredUsers = users.filter(user => 
+    user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    user.email.toLowerCase().includes(searchQuery.toLowerCase())
+  )
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    )
+  }
 
   return (
     <div className="p-6 md:p-10 space-y-8">
@@ -29,15 +81,11 @@ export default function AdminUsersPage() {
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
-        <Button variant="outline" className="gap-2">
-          <Filter className="h-4 w-4" />
-          Filter
-        </Button>
       </div>
 
       <Card className="bg-card/50 backdrop-blur-md">
         <CardHeader>
-          <CardTitle>All Users</CardTitle>
+          <CardTitle>All Users ({filteredUsers.length})</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
@@ -51,22 +99,40 @@ export default function AdminUsersPage() {
                 </tr>
               </thead>
               <tbody>
-                {/* Add user rows here */}
+                {filteredUsers.map((user) => (
+                  <tr key={user.id} className="border-b border-border/30">
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        <Avatar>
+                          <AvatarImage src={user.avatar} />
+                          <AvatarFallback>{user.name[0]}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <div className="font-medium">{user.name}</div>
+                          <div className="text-sm text-muted-foreground">{user.email}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">{user.points}</td>
+                    <td className="px-4 py-3">
+                      {user.is_staff ? "Admin" : "User"}
+                    </td>
+                    <td className="px-4 py-3">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handlePointsAdjustment(user.id, 100, "Admin bonus")}
+                      >
+                        Add Points
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
         </CardContent>
       </Card>
-
-      {/* Add user edit dialog */}
-      <Dialog>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Edit User</DialogTitle>
-          </DialogHeader>
-          {/* Add user edit form */}
-        </DialogContent>
-      </Dialog>
     </div>
   )
 } 
