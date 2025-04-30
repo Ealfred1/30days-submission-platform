@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Star } from "lucide-react"
 import { useState, useEffect } from "react"
 import { useReviews } from "@/contexts/reviews-context"
+import api from "@/services/api"
 
 interface User {
   id: number
@@ -35,14 +36,14 @@ export function UserProfile({ userId }: { userId: string }) {
         setError(null)
         console.log('Fetching user with ID:', userId) // Debug log
 
-        const response = await fetch(`/api/users/${userId}`)
+        const response = await api.get(`/api/${userId}`)
         console.log('Response status:', response.status) // Debug log
 
-        if (!response.ok) {
+        if (response.status !== 200) {
           throw new Error(`Failed to fetch user: ${response.status}`)
         }
 
-        const data = await response.json()
+        const data = response.data
         console.log('User data:', data) // Debug log
         
         if (data.error) {

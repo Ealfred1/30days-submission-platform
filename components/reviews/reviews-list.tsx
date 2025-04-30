@@ -1,75 +1,59 @@
 "use client"
 
-import { useEffect } from "react"
+import { motion } from "framer-motion"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Card, CardContent } from "@/components/ui/card"
-import { motion } from "framer-motion"
-import { MessageSquare, Star, ThumbsUp } from "lucide-react"
+import { StarFilledIcon } from "@radix-ui/react-icons"
+import { format } from "date-fns"
 import { useReviews } from "@/contexts/reviews-context"
-import Link from "next/link"
+import { Review } from "@/services/reviews-api"
 
-export function ReviewsList({ userId }: { userId?: string }) {
-  const { reviews, fetchReviews, incrementHelpful } = useReviews()
+export function ReviewsList() {
+  const { reviews } = useReviews()
 
-  useEffect(() => {
-    fetchReviews(userId)
-  }, [userId])
+  // Handle loading state
+  if (!reviews) {
+    return <div>Loading...</div>
+  }
+
+  // Handle empty state
+  if (reviews.length === 0) {
+    return <div>No reviews found.</div>
+  }
 
   return (
     <div className="space-y-6">
-      {reviews.map((review, index) => (
+      {Array.isArray(reviews) && reviews.map((review: Review, index: number) => (
         <motion.div
           key={review.id}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: index * 0.1 }}
         >
-          <Card className="glass-card glass-card-hover">
+          <Card>
             <CardContent className="p-6">
               <div className="flex items-start gap-4">
-                <Link href={`/profile/${review.user.id}`}>
-                  <Avatar className="h-10 w-10">
-                    <AvatarImage src={review.user.avatar} alt={review.user.name} />
-                    <AvatarFallback>{review.user.name.charAt(0)}</AvatarFallback>
-                  </Avatar>
-                </Link>
-
-                <div className="flex-1 space-y-2">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <Avatar>
+                  <AvatarImage src={review.user.avatar} alt={review.user.name} />
+                  <AvatarFallback>{review.user.name[0]}</AvatarFallback>
+                </Avatar>
+                <div className="flex-1">
+                  <div className="flex items-center justify-between">
                     <div>
-                      <Link href={`/profile/${review.user.id}`}>
-                        <div className="font-medium hover:underline">{review.user.name}</div>
-                      </Link>
-                      <div className="text-sm text-muted-foreground">Reviewed: {review.project}</div>
+                      <h3 className="font-semibold">{review.user.name}</h3>
+                      <p className="text-sm text-muted-foreground">{review.project}</p>
                     </div>
-
                     <div className="flex items-center gap-1">
-                      {Array.from({ length: 5 }).map((_, i) => (
-                        <Star
-                          key={i}
-                          className={`h-4 w-4 ${i < review.rating ? "fill-yellow-500 text-yellow-500" : "text-muted"}`}
-                        />
+                      {Array.from({ length: review.rating }).map((_, i) => (
+                        <StarFilledIcon key={i} className="h-4 w-4 text-yellow-400" />
                       ))}
                     </div>
                   </div>
-
-                  <p className="text-sm">{review.comment}</p>
-
-                  <div className="flex items-center justify-between pt-2">
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                      <MessageSquare className="h-3 w-3" />
-                      <span>{review.date}</span>
-                    </div>
-
-                    <div className="flex items-center gap-1 text-xs">
-                      <button 
-                        className="flex items-center gap-1 text-muted-foreground hover:text-foreground"
-                        onClick={() => incrementHelpful(review.id)}
-                      >
-                        <ThumbsUp className="h-3 w-3" />
-                        <span>Helpful ({review.helpful})</span>
-                      </button>
-                    </div>
+                  <p className="mt-2.5">{review.comment}</p>
+                  <div className="mt-4 flex items-center gap-4">
+                    <span className="text-sm text-muted-foreground">
+                      {format(new Date(review.date), 'MMM d, yyyy')}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -77,11 +61,6 @@ export function ReviewsList({ userId }: { userId?: string }) {
           </Card>
         </motion.div>
       ))}
-      {reviews.length === 0 && (
-        <div className="text-center text-muted-foreground">
-          No reviews yet
-        </div>
-      )}
     </div>
   )
 }

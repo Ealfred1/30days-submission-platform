@@ -1,19 +1,6 @@
 "use client"
 import { createContext, useContext, useState } from "react"
-
-interface Review {
-  id: number
-  user: {
-    id: number
-    name: string
-    avatar: string
-  }
-  project: string
-  rating: number
-  comment: string
-  date: string
-  helpful: number
-}
+import { Review, reviewsApi, CreateReviewData } from "@/services/reviews-api"
 
 interface ReviewsContextType {
   reviews: Review[]
@@ -25,7 +12,7 @@ interface ReviewsContextType {
   setProjectFilter: (project: string) => void
   setRatingFilter: (rating: string) => void
   incrementHelpful: (reviewId: number) => void
-  addReview: (review: Omit<Review, "id" | "date" | "helpful">) => void
+  addReview: (review: CreateReviewData) => Promise<void>
 }
 
 const ReviewsContext = createContext<ReviewsContextType | undefined>(undefined)
@@ -38,49 +25,40 @@ export function ReviewsProvider({ children }: { children: React.ReactNode }) {
 
   const fetchReviews = async (userId?: string) => {
     try {
-      const url = userId 
-        ? `/api/reviews?userId=${userId}`
-        : '/api/reviews'
-      const response = await fetch(url)
-      if (response.ok) {
-        const data = await response.json()
-        setReviews(data.results || [])
+      let response
+      if (userId) {
+        response = await reviewsApi.getByUser(userId)
+      } else {
+        response = await reviewsApi.getAll()
       }
+      // Ensure we're setting an array
+      setReviews(Array.isArray(response) ? response : [])
     } catch (error) {
       console.error("Failed to fetch reviews:", error)
+      setReviews([]) // Set empty array on error
     }
   }
 
   const incrementHelpful = async (reviewId: number) => {
     try {
-      const response = await fetch(`/api/reviews/${reviewId}/helpful`, {
-        method: "POST",
-      })
-      if (response.ok) {
-        setReviews(reviews.map(review => 
-          review.id === reviewId 
-            ? { ...review, helpful: review.helpful + 1 }
-            : review
-        ))
-      }
+      const updatedReview = await reviewsApi.incrementHelpful(reviewId)
+      setReviews(reviews.map(review => 
+        review.id === reviewId 
+          ? { ...review, helpful: updatedReview.helpful }
+          : review
+      ))
     } catch (error) {
       console.error("Failed to increment helpful count:", error)
     }
   }
 
-  const addReview = async (review: Omit<Review, "id" | "date" | "helpful">) => {
+  const addReview = async (reviewData: CreateReviewData) => {
     try {
-      const response = await fetch("/api/reviews", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(review),
-      })
-      if (response.ok) {
-        const newReview = await response.json()
-        setReviews([newReview, ...reviews])
-      }
+      const newReview = await reviewsApi.create(reviewData)
+      setReviews([newReview, ...reviews])
     } catch (error) {
       console.error("Failed to add review:", error)
+      throw error // Re-throw to handle in the component
     }
   }
 
