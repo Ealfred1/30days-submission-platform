@@ -9,6 +9,13 @@ import { useReviews } from "@/contexts/reviews-context"
 import { Review } from "@/services/reviews-api"
 import { useEffect } from "react"
 
+interface PaginatedResponse {
+  count: number
+  next: string | null
+  previous: string | null
+  results: Review[]
+}
+
 export function ReviewsList({ userId }: { userId?: string }) {
   const { reviews, fetchReviews } = useReviews()
 
@@ -27,8 +34,11 @@ export function ReviewsList({ userId }: { userId?: string }) {
     )
   }
 
+  // Get the results array from the paginated response
+  const reviewsToDisplay = Array.isArray(reviews) ? reviews : reviews.results || []
+
   // Handle empty state
-  if (reviews.length === 0) {
+  if (reviewsToDisplay.length === 0) {
     return (
       <div className="text-center text-muted-foreground p-8">
         No reviews found.
@@ -38,7 +48,7 @@ export function ReviewsList({ userId }: { userId?: string }) {
 
   return (
     <div className="space-y-6">
-      {reviews.map((review: Review, index: number) => (
+      {reviewsToDisplay.map((review: Review, index: number) => (
         <motion.div
           key={review.id}
           initial={{ opacity: 0, y: 20 }}

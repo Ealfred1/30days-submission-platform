@@ -17,8 +17,15 @@ interface ReviewsContextType {
 
 const ReviewsContext = createContext<ReviewsContextType | undefined>(undefined)
 
+interface PaginatedResponse {
+  count: number
+  next: string | null
+  previous: string | null
+  results: Review[]
+}
+
 export function ReviewsProvider({ children }: { children: React.ReactNode }) {
-  const [reviews, setReviews] = useState<Review[]>([])
+  const [reviews, setReviews] = useState<PaginatedResponse | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
   const [projectFilter, setProjectFilter] = useState("all")
   const [ratingFilter, setRatingFilter] = useState("all")
@@ -30,8 +37,8 @@ export function ReviewsProvider({ children }: { children: React.ReactNode }) {
 
   const fetchReviews = async (userId?: string) => {
     try {
-      console.log("Fetching reviews for userId:", userId) // Debug log
-      let response: Review[]
+      console.log("Fetching reviews for userId:", userId)
+      let response: PaginatedResponse
       
       if (userId) {
         response = await reviewsApi.getByUser(userId)
@@ -39,11 +46,11 @@ export function ReviewsProvider({ children }: { children: React.ReactNode }) {
         response = await reviewsApi.getAll()
       }
 
-      console.log("Fetched reviews:", response) // Debug log
-      setReviews(Array.isArray(response) ? response : [])
+      console.log("Fetched reviews:", response)
+      setReviews(response)
     } catch (error) {
       console.error("Failed to fetch reviews:", error)
-      setReviews([])
+      setReviews(null)
     }
   }
 

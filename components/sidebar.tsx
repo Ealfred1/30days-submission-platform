@@ -43,6 +43,12 @@ const analyticsNavItems: NavItem[] = [
   { href: "/participants", icon: Users, label: "Participants" },
 ]
 
+const adminNavItems: NavItem[] = [
+  { href: "/admin", icon: LineChart, label: "Admin Dashboard" },
+  { href: "/admin/versions", icon: FileCode, label: "Manage Versions" },
+  { href: "/admin/users", icon: Users, label: "Manage Users" },
+]
+
 export function Sidebar({
   open,
   setOpen,
@@ -54,7 +60,7 @@ export function Sidebar({
   isMobile: boolean
   pathname: string
 }) {
-  const { userInfo, signOut } = useAuth()
+  const { userInfo, signOut, isAdmin } = useAuth()
 
   return (
     <AnimatePresence mode="wait">
@@ -99,16 +105,33 @@ export function Sidebar({
                   </ul>
                 </div>
 
-                <div className="space-y-2">
-                  <h3 className="px-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    Analytics
-                  </h3>
-                  <ul className="space-y-1">
-                    {analyticsNavItems.map((item) => (
-                      <NavItem key={item.href} item={item} isActive={pathname === item.href} />
-                    ))}
-                  </ul>
-                </div>
+                {/* Only show analytics to admins */}
+                {isAdmin && (
+                  <div className="space-y-2">
+                    <h3 className="px-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      Analytics
+                    </h3>
+                    <ul className="space-y-1">
+                      {analyticsNavItems.map((item) => (
+                        <NavItem key={item.href} item={item} isActive={pathname === item.href} />
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Admin section */}
+                {isAdmin && (
+                  <div className="space-y-2">
+                    <h3 className="px-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      Admin
+                    </h3>
+                    <ul className="space-y-1">
+                      {adminNavItems.map((item) => (
+                        <NavItem key={item.href} item={item} isActive={pathname === item.href} />
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </nav>
             </div>
 

@@ -5,18 +5,33 @@ import { User } from 'firebase/auth'
 import { signInWithProvider, signOut, getCurrentUser, getCurrentUserInfo, UserInfo } from '@/services/auth'
 import { toast } from '@/components/ui/use-toast'
 
+interface UserInfo {
+  id: number
+  email: string
+  name: string
+  avatar: string
+  firebase_uid: string
+  provider: string
+  is_staff: boolean
+  is_superuser: boolean
+  date_joined: string
+  last_login: string | null
+}
+
 interface AuthContextType {
-  user: User | null;
-  userInfo: UserInfo | null;
-  loading: boolean;
-  signIn: (provider: 'google' | 'github') => Promise<void>;
-  signOut: () => Promise<void>;
+  user: User | null
+  userInfo: UserInfo | null
+  loading: boolean
+  isAdmin: boolean
+  signIn: (provider: 'google' | 'github') => Promise<void>
+  signOut: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
   userInfo: null,
   loading: true,
+  isAdmin: false,
   signIn: async () => {},
   signOut: async () => {},
 })
@@ -25,6 +40,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null)
   const [loading, setLoading] = useState(true)
+  const [isAdmin, setIsAdmin] = useState(false)
 
   const fetchUserInfo = async () => {
     // Only fetch if we have a token
@@ -50,12 +66,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const user = await getCurrentUser()
         setUser(user)
         
-        // If user exists, get a fresh ID token and verify with backend
         if (user) {
-          const idToken = await user.getIdToken(true) // Force refresh the token
+          const idToken = await user.getIdToken(true)
           const response = await signInWithProvider(user.providerData[0]?.providerId as 'google' | 'github')
           if (response?.token) {
             await fetchUserInfo()
+            // Set admin status based on user info
+            if (userInfo?.is_staff || userInfo?.is_superuser) {
+              setIsAdmin(true)
+            }
           }
         }
       } catch (error) {
@@ -109,6 +128,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         user,
         userInfo,
         loading,
+        isAdmin,
         signIn: handleSignIn,
         signOut: handleSignOut,
       }}
