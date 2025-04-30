@@ -52,7 +52,7 @@ export function ReviewsList() {
                   <p className="mt-2.5">{review.comment}</p>
                   <div className="mt-4 flex items-center gap-4">
                     <span className="text-sm text-muted-foreground">
-                      {format(new Date(review.date), 'MMM d, yyyy')}
+                      {format(new Date(review.created_at), 'MMM d, yyyy')}
                     </span>
                   </div>
                 </div>

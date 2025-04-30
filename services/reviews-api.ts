@@ -10,8 +10,8 @@ export interface Review {
   project: string
   rating: number
   comment: string
-  date: string
   helpful: number
+  created_at: string
 }
 
 export interface CreateReviewData {
@@ -22,7 +22,11 @@ export interface CreateReviewData {
 
 export const reviewsApi = {
   create: async (data: CreateReviewData): Promise<Review> => {
-    const response = await api.post<Review>('/api/reviews/', data)
+    const response = await api.post<Review>('/api/reviews/', {
+      project: data.project,
+      rating: data.rating,
+      comment: data.comment
+    })
     return response.data
   },
 
