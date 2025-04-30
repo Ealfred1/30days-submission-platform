@@ -50,9 +50,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const info = await getCurrentUserInfo()
       setUserInfo(info)
+      // Set admin status based on user info
+      setIsAdmin(info.is_staff || info.is_superuser)
+      console.log('User info:', info) // Debug log
+      console.log('Is admin:', info.is_staff || info.is_superuser) // Debug log
     } catch (error) {
       console.error('Failed to fetch user info:', error)
-      // If we get an unauthorized error, clear the tokens
       if (error.response?.status === 401) {
         localStorage.removeItem('token')
         localStorage.removeItem('refresh_token')
@@ -71,10 +74,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const response = await signInWithProvider(user.providerData[0]?.providerId as 'google' | 'github')
           if (response?.token) {
             await fetchUserInfo()
-            // Set admin status based on user info
-            if (userInfo?.is_staff || userInfo?.is_superuser) {
-              setIsAdmin(true)
-            }
           }
         }
       } catch (error) {
@@ -86,6 +85,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     initAuth()
   }, [])
+
+  // Add debug log
+  useEffect(() => {
+    console.log('Current auth state:', {
+      user: !!user,
+      userInfo,
+      isAdmin,
+      loading
+    })
+  }, [user, userInfo, isAdmin, loading])
 
   const handleSignIn = async (provider: 'google' | 'github') => {
     try {

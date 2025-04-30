@@ -10,7 +10,7 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     fetchStats()
-  }, [fetchStats])
+  }, [])
 
   if (loading) {
     return (

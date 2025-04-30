@@ -61,6 +61,9 @@ export function Sidebar({
   pathname: string
 }) {
   const { userInfo, signOut, isAdmin } = useAuth()
+  
+  // Add debug log
+  console.log('Sidebar auth state:', { userInfo, isAdmin })
 
   return (
     <AnimatePresence mode="wait">
@@ -119,8 +122,8 @@ export function Sidebar({
                   </div>
                 )}
 
-                {/* Admin section */}
-                {isAdmin && (
+                {/* Admin section - with debug comment */}
+                {isAdmin ? (
                   <div className="space-y-2">
                     <h3 className="px-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                       Admin
@@ -131,6 +134,9 @@ export function Sidebar({
                       ))}
                     </ul>
                   </div>
+                ) : (
+                  // Debug comment - remove in production
+                  <div className="hidden">Not showing admin section: isAdmin={String(isAdmin)}</div>
                 )}
               </nav>
             </div>

@@ -2,10 +2,20 @@
 
 import { createContext, useContext, useState } from 'react'
 import { useAuth } from '@/components/auth/auth-provider'
+import api from '@/services/api'
+
+interface PlatformStats {
+  total_users: number
+  active_users: number
+  total_points: number
+  average_points: number
+  submissions_count: number
+  reviews_count: number
+}
 
 interface AdminContextType {
-  stats: any
-  setStats: (stats: any) => void
+  stats: PlatformStats | null
+  setStats: (stats: PlatformStats | null) => void
   loading: boolean
   setLoading: (loading: boolean) => void
   fetchStats: () => Promise<void>
@@ -14,7 +24,7 @@ interface AdminContextType {
 const AdminContext = createContext<AdminContextType | undefined>(undefined)
 
 export function AdminProvider({ children }: { children: React.ReactNode }) {
-  const [stats, setStats] = useState(null)
+  const [stats, setStats] = useState<PlatformStats | null>(null)
   const [loading, setLoading] = useState(false)
   const { isAdmin } = useAuth()
 
@@ -22,11 +32,11 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
     if (!isAdmin) return
     setLoading(true)
     try {
-      const response = await fetch('/api/admin/stats')
-      const data = await response.json()
-      setStats(data)
+      const response = await api.get('/api/admin/platform_stats/')
+      setStats(response.data)
     } catch (error) {
       console.error('Failed to fetch admin stats:', error)
+      setStats(null)
     } finally {
       setLoading(false)
     }

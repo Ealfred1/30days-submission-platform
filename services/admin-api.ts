@@ -22,7 +22,7 @@ export const adminApi = {
   },
 
   adjustUserPoints: async (userId: number, adjustment: PointsAdjustment) => {
-    const response = await api.post(`/api/admin/adjust_points/${userId}/`, adjustment)
+    const response = await api.post(`/api/admin/${userId}/adjust_points/`, adjustment)
     return response.data
   },
 
